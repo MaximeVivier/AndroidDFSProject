@@ -3,15 +3,13 @@ package fr.centralemarseille.maxnews
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import java.io.BufferedReader
-import java.io.IOException
-import java.io.InputStreamReader
-import java.lang.Exception
-import java.net.HttpURLConnection
-import java.net.ResponseCache
-import java.net.URL
-import javax.net.ssl.HttpsURLConnection
-import kotlin.jvm.Throws
+import com.android.volley.toolbox.StringRequest
+import com.android.volley.toolbox.Volley
+import com.android.volley.Request
+import com.android.volley.Response
+import com.google.gson.Gson
+import kotlinx.android.synthetic.main.activity_main.*
+
 
 private const val TAG = "MainActivity"
 
@@ -23,76 +21,63 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         Log.d(TAG, "Activity main is lauched")
 
-        Thread{
-            var str: String = ""
-            try {
-                str = requestGET(url_news)
-                runOnUiThread({
-                    Log.d(TAG, "Response url " + str)
-                })
-            } catch (e: Exception) {
-                Log.d(TAG, "Error fetching data : " + e.toString())
-            }
-        }.start()
-
+        getSources(url_news)
     }
 
-    @Throws(IOException::class)
-    fun requestGET(url: String?): String {
-        val obj = URL(url)
-        val con = obj.openConnection() as HttpsURLConnection
-        Log.d(TAG, "OK1")
-        con.setRequestProperty("User-Agent", "Mozilla/5.0")
-        Log.d(TAG, "OK2")
-        con.setRequestProperty("Content-Type", "application/json")
-        con.requestMethod = "GET"
-        Log.d(TAG, "OK3")
-        val responseCode = con.responseCode
-        Log.d(TAG, "Response Code :: $responseCode")
-        return if (responseCode == HttpURLConnection.HTTP_OK) { // connection ok
-            val `in` =
-                BufferedReader(InputStreamReader(con.inputStream))
-            var inputLine: String?
-            val response = StringBuffer()
-            while (`in`.readLine().also { inputLine = it } != null) {
-                response.append(inputLine)
+    fun getSources(URL_sources: String) {
+        // Instantiate the RequestQueue.
+        val queue = Volley.newRequestQueue(this)
+        Log.d(TAG, "get sources")
+        var gson = Gson()
+
+        // Request a string response from the provided URL.
+        val stringReq = object: StringRequest(Request.Method.GET, URL_sources,
+            { response ->
+                var sourcesObject = gson.fromJson(response.toString(), SourcesObjectFromAPINews::class.java)
+                list_sources.text = sourcesObject.sources[1].description
+            },
+            {
+                Log.d(TAG, "ERROR $it")
+            })
+        {
+            override fun getHeaders(): MutableMap<String, String> {
+                val headers = HashMap<String, String>()
+                headers["User-Agent"] = "Mozilla/5.0"
+                headers["Content-Type"] = "application/json"
+                return headers
             }
-            `in`.close()
-            response.toString()
-        } else {
-            ""
         }
+        queue.add(stringReq)
     }
-/*
-    @Throws(IOException::class)
-    private fun downloadUrl(url: URL): String? {
-        var connection: HttpsURLConnection? = null
-        try {
-            connection = (url.openConnection() as? HttpsURLConnection)
-            connection?.run {
-                readTimeout = 3000
-                connectTimeout = 3000
-                requestMethod = "GET"
-                doInput = true
-                setRequestProperty("User-Agent", "Mozilla/5.0")
-                setRequestProperty("Content-Type", "application/json")
-                connect()
-
-                if (ResponseCode != HttpsURLConnection.HTTP_OK) {
-                    throw IOException("HTTP error code : $responseCode")
-                }
-
-                val data = inputStream.bufferedReader().readText()
-
-                Log.d(TAG, "data --> " + data)
-
-            }
-        } finally {
-            connection?.inputStream?.close()
-            connection?.disconnect()
-        }
-        return 'ok'
-    } */
-
-
 }
+
+data class SourcesObjectFromAPINews(
+    val status: String,
+    val sources: Array<Source>
+)
+
+data class ArticlesObjectFromAPINews(
+    val status: String,
+    val articles: Array<Article>
+)
+
+data class Article(
+    val source: Source,
+    val author: String,
+    val title: String,
+    val urlToImage: String,
+    val description: String,
+    val url: String,
+    val publishedAt: String,
+    val content: String,
+)
+
+data class Source(
+    val id: String,
+    val name: String,
+    val description: String,
+    val url: String,
+    val category: String,
+    val language: String,
+    val country: String,
+)
