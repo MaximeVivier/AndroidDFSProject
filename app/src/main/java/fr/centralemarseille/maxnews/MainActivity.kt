@@ -15,27 +15,16 @@ private const val TAG = "MainActivity"
 
 class MainActivity : AppCompatActivity() {
     val url_news: String = "https://newsapi.org/v2/sources?apiKey=86a0af66e21e4e5a8ec29e0870d4317d&language=fr"
+    val articles_list = ArrayList<Article>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         Log.d(TAG, "Activity main is lauched")
 
-        getSources(url_news)
-
-        val articleList = generateArticleList(30)
-        recycler_view.adapter = ArticleAdapter(articleList)
-        recycler_view.layoutManager = LinearLayoutManager(this)
-        recycler_view.setHasFixedSize(true)
-    }
-
-    private fun generateArticleList(size: Int): List<ArticleItem> {
-        val list = ArrayList<ArticleItem>()
-        for (i in 0 until size) {
-            val item = ArticleItem( "Item $i", "Line 34")
-            list += item
-        }
-        return list
+        // getSources(url_news)
+        getArticlesFromSource("google-news-fr")
+        Log.d(TAG, "articles_list --> " + articles_list)
     }
 
     fun getSources(URL_sources: String) {
@@ -63,35 +52,38 @@ class MainActivity : AppCompatActivity() {
         }
         queue.add(stringReq)
     }
+
+    fun getArticlesFromSource(source: String) {
+        // Instantiate the RequestQueue.
+        val url_articles: String = "https://newsapi.org/v2/everything?apiKey=86a0af66e21e4e5a8ec29e0870d4317d&language=fr&sources=$source"
+        val queue = Volley.newRequestQueue(this)
+        Log.d(TAG, "get articles")
+        var gson = Gson()
+
+        // Request a string response from the provided URL.
+        val stringReq = object: StringRequest(Request.Method.GET, url_articles,
+            { response ->
+                var articlesObject = gson.fromJson(response.toString(), ArticlesObjectFromAPINews::class.java).articles
+                for (article in articlesObject) {
+                    articles_list.add(article)
+                }
+                recycler_view.adapter = ArticleAdapter(articles_list)
+                recycler_view.layoutManager = LinearLayoutManager(this)
+                recycler_view.setHasFixedSize(true)
+            },
+            {
+                Log.d(TAG, "ERROR $it")
+            })
+        {
+            override fun getHeaders(): MutableMap<String, String> {
+                val headers = HashMap<String, String>()
+                headers["User-Agent"] = "Mozilla/5.0"
+                headers["Content-Type"] = "application/json"
+                return headers
+            }
+        }
+        queue.add(stringReq)
+    }
+
+    }
 }
-
-data class SourcesObjectFromAPINews(
-    val status: String,
-    val sources: Array<Source>
-)
-
-data class ArticlesObjectFromAPINews(
-    val status: String,
-    val articles: Array<Article>
-)
-
-data class Article(
-    val source: Source,
-    val author: String,
-    val title: String,
-    val urlToImage: String,
-    val description: String,
-    val url: String,
-    val publishedAt: String,
-    val content: String,
-)
-
-data class Source(
-    val id: String,
-    val name: String,
-    val description: String,
-    val url: String,
-    val category: String,
-    val language: String,
-    val country: String,
-)

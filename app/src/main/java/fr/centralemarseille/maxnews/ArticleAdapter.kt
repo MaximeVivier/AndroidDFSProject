@@ -1,5 +1,6 @@
 package fr.centralemarseille.maxnews
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -7,7 +8,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.article_item.view.*
 
-class ArticleAdapter(private val exampleList: List<ArticleItem>) :
+class ArticleAdapter(private val exampleList: List<Article>) :
     RecyclerView.Adapter<ArticleAdapter.ExampleViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ExampleViewHolder {
@@ -18,10 +19,11 @@ class ArticleAdapter(private val exampleList: List<ArticleItem>) :
     }
 
     override fun onBindViewHolder(holder: ExampleViewHolder, position: Int) {
-        val currentItem = exampleList[position]
+        val Article = exampleList[position]
+        Log.d("ADAPTER", "article --> " + Article.toString())
 
-        holder.textView1.text = currentItem.text1
-        holder.textView2.text = currentItem.text2
+        holder.textView1.text = Article.title
+        holder.textView2.text = Article.description
     }
 
     override fun getItemCount() = exampleList.size
