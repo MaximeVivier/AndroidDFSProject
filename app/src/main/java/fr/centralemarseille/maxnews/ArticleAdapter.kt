@@ -8,7 +8,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.article_item.view.*
 
-class ArticleAdapter(private val exampleList: List<Article>) :
+class ArticleAdapter(private val exampleList: List<Article>, private val onArticleClickListener: onArticleClickListener) :
     RecyclerView.Adapter<ArticleAdapter.ExampleViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ExampleViewHolder {
@@ -24,6 +24,9 @@ class ArticleAdapter(private val exampleList: List<Article>) :
 
         holder.textView1.text = Article.title
         holder.textView2.text = Article.description
+        holder.itemView.see_more.setOnClickListener {
+            onArticleClickListener.onArticleItemClicked(position)
+        }
     }
 
     override fun getItemCount() = exampleList.size

@@ -25,6 +25,14 @@
             android:layout_below="@id/text_view_1"
             android:text="Line 2" />
 
+        <Button
+            android:id="@+id/see_more"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="5dp"
+            android:text="See more ..." />
+
     </RelativeLayout>
 
 </androidx.cardview.widget.CardView>

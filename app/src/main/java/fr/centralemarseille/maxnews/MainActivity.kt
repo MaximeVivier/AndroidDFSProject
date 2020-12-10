@@ -3,6 +3,7 @@ package fr.centralemarseille.maxnews
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
@@ -13,7 +14,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 
 private const val TAG = "MainActivity"
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), onArticleClickListener {
     val url_news: String = "https://newsapi.org/v2/sources?apiKey=86a0af66e21e4e5a8ec29e0870d4317d&language=fr"
     val articles_list = ArrayList<Article>()
 
@@ -24,7 +25,6 @@ class MainActivity : AppCompatActivity() {
 
         // getSources(url_news)
         getArticlesFromSource("google-news-fr")
-        Log.d(TAG, "articles_list --> " + articles_list)
     }
 
     fun getSources(URL_sources: String) {
@@ -67,7 +67,7 @@ class MainActivity : AppCompatActivity() {
                 for (article in articlesObject) {
                     articles_list.add(article)
                 }
-                recycler_view.adapter = ArticleAdapter(articles_list)
+                recycler_view.adapter = ArticleAdapter(articles_list, this)
                 recycler_view.layoutManager = LinearLayoutManager(this)
                 recycler_view.setHasFixedSize(true)
             },
@@ -85,5 +85,8 @@ class MainActivity : AppCompatActivity() {
         queue.add(stringReq)
     }
 
+    override fun onArticleItemClicked(position: Int) {
+        Toast.makeText(this, "Article " + position, Toast.LENGTH_LONG).show()
     }
+
 }
