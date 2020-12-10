@@ -3,10 +3,10 @@ package fr.centralemarseille.maxnews
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.android.volley.Request
-import com.android.volley.Response
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -22,6 +22,20 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "Activity main is lauched")
 
         getSources(url_news)
+
+        val articleList = generateArticleList(30)
+        recycler_view.adapter = ArticleAdapter(articleList)
+        recycler_view.layoutManager = LinearLayoutManager(this)
+        recycler_view.setHasFixedSize(true)
+    }
+
+    private fun generateArticleList(size: Int): List<ArticleItem> {
+        val list = ArrayList<ArticleItem>()
+        for (i in 0 until size) {
+            val item = ArticleItem( "Item $i", "Line 34")
+            list += item
+        }
+        return list
     }
 
     fun getSources(URL_sources: String) {
