@@ -1,5 +1,6 @@
 package fr.centralemarseille.maxnews
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import kotlinx.android.synthetic.main.activity_article_detail.*
@@ -12,14 +13,14 @@ class ArticleDetailActivity : AppCompatActivity() {
         titre.text = intent.getStringExtra("titre")
         date.text = intent.getStringExtra("date")
         source.text = intent.getStringExtra("source")
+        description.text = intent.getStringExtra("description")
+        auteur.text = intent.getStringExtra("auteur")
 
-        /*
-        findViewById<Button>(R.id.linkButton).setOnClickListener{
-            val webViewIntent = Intent(this, WebViewActivity::class.java)
-            webViewIntent.putExtra("link", intent.getStringExtra("link"))
-            startActivity(webViewIntent)
+        lire_article.setOnClickListener{
+            val intentArticle = Intent(this, WebViewActivity::class.java)
+            intentArticle.putExtra("lien_article", intent.getStringExtra("lien_article"))
+            startActivity(intentArticle)
         }
-        */
 
         // Picasso.get().load(intent.getStringExtra("urlToImage")).into(findViewById<ImageView>(R.id.imageView))
     }
