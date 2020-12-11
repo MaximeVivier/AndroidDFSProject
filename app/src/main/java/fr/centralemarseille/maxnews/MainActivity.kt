@@ -38,7 +38,7 @@ class MainActivity : AppCompatActivity(), onArticleClickListener {
         val stringReq = object: StringRequest(Request.Method.GET, URL_sources,
             { response ->
                 var sourcesObject = gson.fromJson(response.toString(), SourcesObjectFromAPINews::class.java)
-                list_sources.text = sourcesObject.sources[1].description
+                // list_sources.text = sourcesObject.sources[1].description
             },
             {
                 Log.d(TAG, "ERROR $it")
