@@ -8,18 +8,17 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.AdapterView.OnItemSelectedListener
 import android.widget.ArrayAdapter
+import android.widget.LinearLayout
 import android.widget.Spinner
-import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_main.*
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 
 
 private const val TAG = "MainActivity"
@@ -29,6 +28,7 @@ class MainActivity : AppCompatActivity(), onArticleClickListener {
     var articles_list = ArrayList<Article>()
     var sources_list = ArrayList<Source>()
     var gson = Gson()
+    val fm: FragmentManager = supportFragmentManager
 
     lateinit var source_spinner: Spinner;
     lateinit var preferences: SharedPreferences
@@ -37,6 +37,14 @@ class MainActivity : AppCompatActivity(), onArticleClickListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         Log.d(TAG, "Activity main is lauched")
+
+        var current_page: Int = 1
+
+        fm.beginTransaction()
+            .show(progressBarFragment)
+            .commit()
+
+        articlesLayout.visibility = LinearLayout.INVISIBLE;
 
         preferences = getPreferences(MODE_PRIVATE)
 
@@ -56,28 +64,20 @@ class MainActivity : AppCompatActivity(), onArticleClickListener {
         source_spinner.setAdapter(first_source_adapter)
         getSources(url_sources_news, lastSavedSource)
 
-
-        /*
-        val arrayList1 = ArrayList<String>()
-
-        arrayList1.add("google-news-fr")
-
-        val source_adapter: ArrayAdapter<String> =
-            ArrayAdapter<String>(
-                this, android.R.layout.simple_spinner_dropdown_item,
-                arrayList1
-            )
-        source_spinner.setAdapter(source_adapter);
-        */
-
         source_spinner.setOnItemSelectedListener(object : OnItemSelectedListener {
             override fun onItemSelected(
                 parent: AdapterView<*>, view: View?,
                 position: Int, arg3: Long
             ) {
                 if (sources_list.size > 1) {
-                    getArticlesFromSource(sources_list[source_spinner.getSelectedItemPosition()].id)
+                    current_page = getArticlesFromSource(sources_list[source_spinner.getSelectedItemPosition()].id, 1, sources_list[source_spinner.getSelectedItemPosition()])
                     saveCurrentSource(sources_list[source_spinner.getSelectedItemPosition()])
+                    if (articlesLayout.visibility == LinearLayout.INVISIBLE) {
+                        fm.beginTransaction()
+                            .hide(progressBarFragment)
+                            .commit()
+                        articlesLayout.visibility = LinearLayout.VISIBLE
+                    }
                 }
             }
 
@@ -113,10 +113,9 @@ class MainActivity : AppCompatActivity(), onArticleClickListener {
                     val spinnerPosition: Int = source_adapter.getPosition(lastSavedSource)
                     source_spinner.setSelection(spinnerPosition)
                 }
-                // list_sources.text = sourcesObject.sources[1].description
             },
             {
-                Log.d(TAG, "ERROR $it")
+                popUpConnectionProblem(lastSavedSource)
             })
         {
             override fun getHeaders(): MutableMap<String, String> {
@@ -129,9 +128,12 @@ class MainActivity : AppCompatActivity(), onArticleClickListener {
         queue.add(stringReq)
     }
 
-    fun getArticlesFromSource(source: String) {
+    fun getArticlesFromSource(source: String, page: Int, lastSavedSource: Source?): Int {
         // Instantiate the RequestQueue.
-        val url_articles: String = "https://newsapi.org/v2/everything?apiKey=86a0af66e21e4e5a8ec29e0870d4317d&language=fr&sources=$source"
+        var url_articles: String = "https://newsapi.org/v2/everything?apiKey=86a0af66e21e4e5a8ec29e0870d4317d&language=fr&sources=$source"
+        if (page > 1) {
+            url_articles = url_articles + "&page=$page"
+        }
         val queue = Volley.newRequestQueue(this)
         Log.d(TAG, "get articles")
 
@@ -142,16 +144,18 @@ class MainActivity : AppCompatActivity(), onArticleClickListener {
                     response.toString(),
                     ArticlesObjectFromAPINews::class.java
                 ).articles
-                articles_list = ArrayList<Article>()
+                if (page == 1) {
+                    articles_list = ArrayList<Article>()
+                }
                 for (article in articlesObject) {
                     articles_list.add(article)
                 }
-                recycler_view.adapter = ArticleAdapter(articles_list, this)
-                recycler_view.layoutManager = LinearLayoutManager(this)
-                recycler_view.setHasFixedSize(true)
+                articles_recycler_view.adapter = ArticleAdapter(articles_list, this)
+                articles_recycler_view.layoutManager = LinearLayoutManager(this)
+                articles_recycler_view.setHasFixedSize(true)
             },
             {
-                Log.d(TAG, "ERROR $it")
+                popUpConnectionProblem(lastSavedSource)
             })
         {
             override fun getHeaders(): MutableMap<String, String> {
@@ -162,10 +166,11 @@ class MainActivity : AppCompatActivity(), onArticleClickListener {
             }
         }
         queue.add(stringReq)
+        return page
     }
 
     private fun saveCurrentSource(sourceToSave: Source) {
-        with (preferences.edit()) {
+        with(preferences.edit()) {
             putString("current_source", gson.toJson(sourceToSave))
             apply()
         }
@@ -173,6 +178,24 @@ class MainActivity : AppCompatActivity(), onArticleClickListener {
 
     private fun getLastSavedSource(): Source? {
         return gson.fromJson(preferences.getString("current_source", null), Source::class.java)
+    }
+
+    fun popUpConnectionProblem(lastSavedSource: Source?) {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Alert")
+        builder.setMessage("An issue occured when fetching data")
+        //builder.setPositiveButton("OK", DialogInterface.OnClickListener(function = x))
+
+        builder.setPositiveButton("Retry") { _, _ ->
+            getSources(url_sources_news, lastSavedSource)
+        }
+
+        builder.setNegativeButton("OK") { _, _ ->
+            fm.beginTransaction()
+                .hide(progressBarFragment)
+                .commit()
+        }
+        builder.show()
     }
 
     override fun onArticleItemClicked(position: Int) {
