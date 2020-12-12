@@ -29,4 +29,9 @@ data class Source(
     val category: String,
     val language: String,
     val country: String,
-)
+) {
+    override fun toString(): String {
+        return name
+    }
+
+}

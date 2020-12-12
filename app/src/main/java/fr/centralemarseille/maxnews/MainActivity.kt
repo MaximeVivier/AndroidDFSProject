@@ -1,23 +1,33 @@
 package fr.centralemarseille.maxnews
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.View
+import android.widget.AdapterView
+import android.widget.AdapterView.OnItemSelectedListener
+import android.widget.ArrayAdapter
+import android.widget.Spinner
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
-import com.android.volley.Request
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_main.*
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 
 private const val TAG = "MainActivity"
 
 class MainActivity : AppCompatActivity(), onArticleClickListener {
-    val url_news: String = "https://newsapi.org/v2/sources?apiKey=86a0af66e21e4e5a8ec29e0870d4317d&language=fr"
+    val url_sources_news: String = "https://newsapi.org/v2/sources?apiKey=86a0af66e21e4e5a8ec29e0870d4317d&language=fr"
     val articles_list = ArrayList<Article>()
+
+    lateinit var source_spinner: Spinner;
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,7 +35,34 @@ class MainActivity : AppCompatActivity(), onArticleClickListener {
         Log.d(TAG, "Activity main is lauched")
 
         // getSources(url_news)
+        getSources(url_sources_news)
         getArticlesFromSource("google-news-fr")
+        source_spinner = source_chooser
+
+        val arrayList1 = ArrayList<String>()
+
+        arrayList1.add("google-news-fr")
+
+        val source_adapter: ArrayAdapter<String> =
+            ArrayAdapter<String>(
+                this, android.R.layout.simple_spinner_dropdown_item,
+                arrayList1
+            )
+        source_spinner.setAdapter(source_adapter);
+
+        source_spinner.setOnItemSelectedListener(object : OnItemSelectedListener {
+            override fun onItemSelected(
+                parent: AdapterView<*>, view: View?,
+                position: Int, arg3: Long
+            ) {
+                val city = "The city is " + parent.getItemAtPosition(position).toString()
+                Toast.makeText(parent.context, city, Toast.LENGTH_LONG).show()
+            }
+
+            override fun onNothingSelected(arg0: AdapterView<*>?) {
+                // TODO Auto-generated method stub
+            }
+        })
     }
 
     fun getSources(URL_sources: String) {
@@ -37,7 +74,20 @@ class MainActivity : AppCompatActivity(), onArticleClickListener {
         // Request a string response from the provided URL.
         val stringReq = object: StringRequest(Request.Method.GET, URL_sources,
             { response ->
-                var sourcesObject = gson.fromJson(response.toString(), SourcesObjectFromAPINews::class.java)
+                var sourcesObject = gson.fromJson(
+                    response.toString(),
+                    SourcesObjectFromAPINews::class.java
+                )
+                val arraySources = ArrayList<Source>()
+                for (source in sourcesObject.sources) {
+                    arraySources.add(source)
+                }
+                val source_adapter: ArrayAdapter<Source> =
+                    ArrayAdapter<Source>(
+                        this, android.R.layout.simple_spinner_dropdown_item,
+                        arraySources
+                    )
+                source_spinner.setAdapter(source_adapter)
                 // list_sources.text = sourcesObject.sources[1].description
             },
             {
@@ -64,7 +114,10 @@ class MainActivity : AppCompatActivity(), onArticleClickListener {
         // Request a string response from the provided URL.
         val stringReq = object: StringRequest(Request.Method.GET, url_articles,
             { response ->
-                var articlesObject = gson.fromJson(response.toString(), ArticlesObjectFromAPINews::class.java).articles
+                var articlesObject = gson.fromJson(
+                    response.toString(),
+                    ArticlesObjectFromAPINews::class.java
+                ).articles
                 for (article in articlesObject) {
                     articles_list.add(article)
                 }
