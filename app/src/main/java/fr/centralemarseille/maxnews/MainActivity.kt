@@ -5,15 +5,13 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.AdapterView
+import android.widget.*
 import android.widget.AdapterView.OnItemSelectedListener
-import android.widget.ArrayAdapter
-import android.widget.LinearLayout
-import android.widget.Spinner
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.FragmentManager
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
@@ -25,11 +23,11 @@ private const val TAG = "MainActivity"
 
 class MainActivity : AppCompatActivity(), onArticleClickListener {
     val url_sources_news: String = "https://newsapi.org/v2/sources?apiKey=86a0af66e21e4e5a8ec29e0870d4317d&language=fr"
-    var articles_list = ArrayList<Article>()
     var sources_list = ArrayList<Source>()
     var gson = Gson()
     val fm: FragmentManager = supportFragmentManager
 
+    lateinit var articles_adapter: ArticleAdapter
     lateinit var source_spinner: Spinner;
     lateinit var preferences: SharedPreferences
 
@@ -70,7 +68,11 @@ class MainActivity : AppCompatActivity(), onArticleClickListener {
                 position: Int, arg3: Long
             ) {
                 if (sources_list.size > 1) {
-                    current_page = getArticlesFromSource(sources_list[source_spinner.getSelectedItemPosition()].id, 1, sources_list[source_spinner.getSelectedItemPosition()])
+                    current_page = getArticlesFromSource(
+                        sources_list[source_spinner.getSelectedItemPosition()].id,
+                        1,
+                        sources_list[source_spinner.getSelectedItemPosition()]
+                    )
                     saveCurrentSource(sources_list[source_spinner.getSelectedItemPosition()])
                     if (articlesLayout.visibility == LinearLayout.INVISIBLE) {
                         fm.beginTransaction()
@@ -83,6 +85,20 @@ class MainActivity : AppCompatActivity(), onArticleClickListener {
 
             override fun onNothingSelected(arg0: AdapterView<*>?) {
                 // TODO Auto-generated method stub
+            }
+        })
+
+        articles_recycler_view.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                super.onScrollStateChanged(recyclerView, newState)
+                if (!recyclerView.canScrollVertically(1) && newState == 0) {
+                    current_page += 1
+                    current_page = getArticlesFromSource(
+                        sources_list[source_spinner.getSelectedItemPosition()].id,
+                        current_page,
+                        sources_list[source_spinner.getSelectedItemPosition()]
+                    )
+                }
             }
         })
     }
@@ -145,14 +161,10 @@ class MainActivity : AppCompatActivity(), onArticleClickListener {
                     ArticlesObjectFromAPINews::class.java
                 ).articles
                 if (page == 1) {
-                    articles_list = ArrayList<Article>()
+                    setUpRecyclerView()
                 }
-                for (article in articlesObject) {
-                    articles_list.add(article)
-                }
-                articles_recycler_view.adapter = ArticleAdapter(articles_list, this)
-                articles_recycler_view.layoutManager = LinearLayoutManager(this)
-                articles_recycler_view.setHasFixedSize(true)
+                articles_adapter.addArticlesToList(articlesObject)
+                articles_adapter.notifyDataSetChanged()
             },
             {
                 popUpConnectionProblem(lastSavedSource)
@@ -180,6 +192,13 @@ class MainActivity : AppCompatActivity(), onArticleClickListener {
         return gson.fromJson(preferences.getString("current_source", null), Source::class.java)
     }
 
+    fun setUpRecyclerView () {
+        articles_adapter = ArticleAdapter(ArrayList<Article>(), this)
+        articles_recycler_view.adapter = articles_adapter
+        articles_recycler_view.layoutManager = LinearLayoutManager(this)
+        articles_recycler_view.setHasFixedSize(true)
+    }
+
     fun popUpConnectionProblem(lastSavedSource: Source?) {
         val builder = AlertDialog.Builder(this)
         builder.setTitle("Alert")
@@ -199,7 +218,7 @@ class MainActivity : AppCompatActivity(), onArticleClickListener {
     }
 
     override fun onArticleItemClicked(position: Int) {
-        val article = articles_list[position]
+        val article = articles_adapter.articlesList[position]
         val articleIntent = Intent(this, ArticleDetailActivity::class.java)
         articleIntent.putExtra("titre", article.title)
         articleIntent.putExtra("auteur", article.author)

@@ -8,19 +8,18 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.article_item.view.*
 
-class ArticleAdapter(private val exampleList: List<Article>, private val onArticleClickListener: onArticleClickListener) :
-    RecyclerView.Adapter<ArticleAdapter.ExampleViewHolder>() {
+class ArticleAdapter(val articlesList: ArrayList<Article>, private val onArticleClickListener: onArticleClickListener) :
+    RecyclerView.Adapter<ArticleAdapter.ArticleViewHolder>() {
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ExampleViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ArticleViewHolder {
         val itemView = LayoutInflater.from(parent.context).inflate(R.layout.article_item,
             parent, false)
 
-        return ExampleViewHolder(itemView)
+        return ArticleViewHolder(itemView)
     }
 
-    override fun onBindViewHolder(holder: ExampleViewHolder, position: Int) {
-        val Article = exampleList[position]
-        Log.d("ADAPTER", "article --> " + Article.toString())
+    override fun onBindViewHolder(holder: ArticleViewHolder, position: Int) {
+        val Article = articlesList[position]
 
         holder.textView1.text = Article.title
         holder.textView2.text = Article.description
@@ -29,10 +28,17 @@ class ArticleAdapter(private val exampleList: List<Article>, private val onArtic
         }
     }
 
-    override fun getItemCount() = exampleList.size
+    override fun getItemCount() = articlesList.size
 
-    class ExampleViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    class ArticleViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val textView1: TextView = itemView.text_view_1
         val textView2: TextView = itemView.text_view_2
     }
+
+    fun addArticlesToList (articles: Array<Article>) {
+        for (article in articles){
+            articlesList.add(article)
+        }
+    }
+
 }
