@@ -1,6 +1,7 @@
 package fr.centralemarseille.maxnews
 
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -25,20 +26,38 @@ private const val TAG = "MainActivity"
 
 class MainActivity : AppCompatActivity(), onArticleClickListener {
     val url_sources_news: String = "https://newsapi.org/v2/sources?apiKey=86a0af66e21e4e5a8ec29e0870d4317d&language=fr"
-    val articles_list = ArrayList<Article>()
+    var articles_list = ArrayList<Article>()
+    var sources_list = ArrayList<Source>()
+    var gson = Gson()
 
     lateinit var source_spinner: Spinner;
+    lateinit var preferences: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         Log.d(TAG, "Activity main is lauched")
 
+        preferences = getPreferences(MODE_PRIVATE)
+
+        val lastSavedSource: Source? = getLastSavedSource()
+        if (lastSavedSource != null) {
+            sources_list.add(lastSavedSource)
+        }
+
         // getSources(url_news)
-        getSources(url_sources_news)
-        getArticlesFromSource("google-news-fr")
         source_spinner = source_chooser
 
+        val first_source_adapter: ArrayAdapter<Source> =
+            ArrayAdapter<Source>(
+                this, android.R.layout.simple_spinner_dropdown_item,
+                sources_list
+            )
+        source_spinner.setAdapter(first_source_adapter)
+        getSources(url_sources_news, lastSavedSource)
+
+
+        /*
         val arrayList1 = ArrayList<String>()
 
         arrayList1.add("google-news-fr")
@@ -49,14 +68,17 @@ class MainActivity : AppCompatActivity(), onArticleClickListener {
                 arrayList1
             )
         source_spinner.setAdapter(source_adapter);
+        */
 
         source_spinner.setOnItemSelectedListener(object : OnItemSelectedListener {
             override fun onItemSelected(
                 parent: AdapterView<*>, view: View?,
                 position: Int, arg3: Long
             ) {
-                val city = "The city is " + parent.getItemAtPosition(position).toString()
-                Toast.makeText(parent.context, city, Toast.LENGTH_LONG).show()
+                if (sources_list.size > 1) {
+                    getArticlesFromSource(sources_list[source_spinner.getSelectedItemPosition()].id)
+                    saveCurrentSource(sources_list[source_spinner.getSelectedItemPosition()])
+                }
             }
 
             override fun onNothingSelected(arg0: AdapterView<*>?) {
@@ -65,11 +87,10 @@ class MainActivity : AppCompatActivity(), onArticleClickListener {
         })
     }
 
-    fun getSources(URL_sources: String) {
+    fun getSources(URL_sources: String, lastSavedSource: Source?) {
         // Instantiate the RequestQueue.
         val queue = Volley.newRequestQueue(this)
         Log.d(TAG, "get sources")
-        var gson = Gson()
 
         // Request a string response from the provided URL.
         val stringReq = object: StringRequest(Request.Method.GET, URL_sources,
@@ -78,16 +99,20 @@ class MainActivity : AppCompatActivity(), onArticleClickListener {
                     response.toString(),
                     SourcesObjectFromAPINews::class.java
                 )
-                val arraySources = ArrayList<Source>()
+                sources_list = ArrayList<Source>()
                 for (source in sourcesObject.sources) {
-                    arraySources.add(source)
+                    sources_list.add(source)
                 }
                 val source_adapter: ArrayAdapter<Source> =
                     ArrayAdapter<Source>(
                         this, android.R.layout.simple_spinner_dropdown_item,
-                        arraySources
+                        sources_list
                     )
                 source_spinner.setAdapter(source_adapter)
+                if (lastSavedSource != null) {
+                    val spinnerPosition: Int = source_adapter.getPosition(lastSavedSource)
+                    source_spinner.setSelection(spinnerPosition)
+                }
                 // list_sources.text = sourcesObject.sources[1].description
             },
             {
@@ -109,7 +134,6 @@ class MainActivity : AppCompatActivity(), onArticleClickListener {
         val url_articles: String = "https://newsapi.org/v2/everything?apiKey=86a0af66e21e4e5a8ec29e0870d4317d&language=fr&sources=$source"
         val queue = Volley.newRequestQueue(this)
         Log.d(TAG, "get articles")
-        var gson = Gson()
 
         // Request a string response from the provided URL.
         val stringReq = object: StringRequest(Request.Method.GET, url_articles,
@@ -118,6 +142,7 @@ class MainActivity : AppCompatActivity(), onArticleClickListener {
                     response.toString(),
                     ArticlesObjectFromAPINews::class.java
                 ).articles
+                articles_list = ArrayList<Article>()
                 for (article in articlesObject) {
                     articles_list.add(article)
                 }
@@ -137,6 +162,17 @@ class MainActivity : AppCompatActivity(), onArticleClickListener {
             }
         }
         queue.add(stringReq)
+    }
+
+    private fun saveCurrentSource(sourceToSave: Source) {
+        with (preferences.edit()) {
+            putString("current_source", gson.toJson(sourceToSave))
+            apply()
+        }
+    }
+
+    private fun getLastSavedSource(): Source? {
+        return gson.fromJson(preferences.getString("current_source", null), Source::class.java)
     }
 
     override fun onArticleItemClicked(position: Int) {
