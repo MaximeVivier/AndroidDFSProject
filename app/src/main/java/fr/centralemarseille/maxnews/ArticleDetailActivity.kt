@@ -3,6 +3,8 @@ package fr.centralemarseille.maxnews
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
+import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_article_detail.*
 
 class ArticleDetailActivity : AppCompatActivity() {
@@ -22,6 +24,6 @@ class ArticleDetailActivity : AppCompatActivity() {
             startActivity(intentArticle)
         }
 
-        // Picasso.get().load(intent.getStringExtra("urlToImage")).into(findViewById<ImageView>(R.id.imageView))
+        Picasso.with(this).load(intent.getStringExtra("urlImage")).into(image_article)
     }
 }
