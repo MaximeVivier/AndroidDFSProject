@@ -14,17 +14,10 @@
         tools:layout_editor_absoluteX="8dp"
         tools:layout_editor_absoluteY="8dp" />
 
-    <ProgressBar
-        android:id="@+id/progressBarArticle"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="277dp"
-        android:layout_height="79dp"
-        android:indeterminate="true"
-        android:minWidth="200dp"
-        android:minHeight="50dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    <fragment
+        android:id="@+id/progressBarFragmentWeb"
+        android:name="fr.centralemarseille.maxnews.LoadingPageFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
