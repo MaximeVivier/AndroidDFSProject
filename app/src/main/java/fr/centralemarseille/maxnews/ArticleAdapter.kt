@@ -40,6 +40,11 @@ class ArticleAdapter(val articlesList: ArrayList<Article>, private val onArticle
         holder.title_view.text = Article.title
         holder.auteur_view.text = Article.author
         holder.date_view.text = Article.publishedAt
+        if (Article.urlToImage == null) {
+            holder.image_article.setImageResource(R.mipmap.newsapi_logo)
+        } else {
+            Picasso.with(holder.holder_context).load(Article.urlToImage).into(holder.image_article)
+        }
         holder.see_more_button.setOnClickListener {
             onArticleClickListener.onArticleItemClicked(position)
         }
