@@ -24,6 +24,8 @@ class ArticleDetailActivity : AppCompatActivity() {
             startActivity(intentArticle)
         }
 
-        Picasso.with(this).load(intent.getStringExtra("urlImage")).into(image_article)
+        if (intent.getStringExtra("urlImage") != null) {
+            Picasso.with(this).load(intent.getStringExtra("urlImage")).into(image_article)
+        }
     }
 }
