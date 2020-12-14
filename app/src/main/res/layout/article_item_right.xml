@@ -57,12 +57,12 @@
 
         <Button
             android:id="@+id/see_more_button"
-            android:layout_width="110dp"
+            android:layout_width="140dp"
             android:layout_height="40dp"
-            android:layout_marginStart="275dp"
+            android:layout_marginStart="250dp"
             android:layout_marginBottom="3dp"
-            android:text="See more ..."
-            android:backgroundTint="#a6ffbe"/>
+            android:text="Plus de détails"
+            android:backgroundTint="#a6ffbe" />
 
     </LinearLayout>
 

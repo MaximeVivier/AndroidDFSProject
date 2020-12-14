@@ -22,7 +22,10 @@ import kotlinx.android.synthetic.main.activity_main.*
 private const val TAG = "MainActivity"
 
 class MainActivity : AppCompatActivity(), onArticleClickListener {
-    val url_sources_news: String = "https://newsapi.org/v2/sources?apiKey=86a0af66e21e4e5a8ec29e0870d4317d&language=fr"
+    val token: String = "86a0af66e21e4e5a8ec29e0870d4317d"
+    val articles_language: String = "fr"
+    val url_sources_news: String = "https://newsapi.org/v2/sources?apiKey=$token&language=$articles_language"
+    val url_articles_news_need_to_add_source: String = "https://newsapi.org/v2/everything?apiKey=$token&language=$articles_language"
     var sources_list = ArrayList<Source>()
     var gson = Gson()
     val fm: FragmentManager = supportFragmentManager
@@ -146,7 +149,7 @@ class MainActivity : AppCompatActivity(), onArticleClickListener {
 
     fun getArticlesFromSource(source: String, page: Int, lastSavedSource: Source?): Int {
         // Instantiate the RequestQueue.
-        var url_articles: String = "https://newsapi.org/v2/everything?apiKey=86a0af66e21e4e5a8ec29e0870d4317d&language=fr&sources=$source"
+        var url_articles: String = url_articles_news_need_to_add_source + "&sources=$source"
         if (page > 1) {
             url_articles = url_articles + "&page=$page"
         }
